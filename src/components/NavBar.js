@@ -1,9 +1,12 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import logo from '../assets/banana-01.png';
 import { useHistory, Link } from 'react-router-dom';
+import  {AuthContext} from "../context/AuthContext";
 
 function NavBar() {
   const history = useHistory();
+  const {AuthContextState , toggleIsAuthContext} = useContext(AuthContext)
+
 
   return (
     <nav>
@@ -16,7 +19,7 @@ function NavBar() {
           </span>
         </Link>
 
-      <div>
+      { AuthContextState === false && <div>
         <button
           type="button"
           onClick={() => history.push('/signin')}
@@ -29,7 +32,21 @@ function NavBar() {
         >
           Registreren
         </button>
-      </div>
+      </div> }
+      {AuthContextState === true && <div>
+        <button
+            type="button"
+            onClick={() => history.push('/profile')}
+        >
+          Profile
+        </button>
+        <button
+            type="button"
+            onClick={toggleIsAuthContext}
+        >
+          Log Uit
+        </button>
+      </div>}
     </nav>
   );
 }
