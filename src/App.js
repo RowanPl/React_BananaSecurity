@@ -1,33 +1,37 @@
-import React from 'react';
-import { Switch, Route } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import { AuthContext } from './context/AuthContext';
 import './App.css';
 
 function App() {
+  const { hasAuth } = useContext(AuthContext);
+
   return (
-    <>
-      <NavBar />
-      <div className="content">
-        <Switch>
-          <Route exact path="/">
-            <Home />
-          </Route>
-          <Route path="/profile">
-            <Profile />
-          </Route>
-          <Route exact path="/signin">
-            <SignIn />
-          </Route>
-          <Route exact path="/signup">
-            <SignUp />
-          </Route>
-        </Switch>
-      </div>
-    </>
+
+      <>
+        <NavBar />
+        <div className="content">
+          <Switch>
+            <Route exact path="/">
+              <Home />
+            </Route>
+            <Route path="/profile">
+              { hasAuth ? <Profile /> : <Redirect to="/" />}
+            </Route>
+            <Route exact path="/signin">
+              <SignIn />
+            </Route>
+            <Route exact path="/signup">
+              <SignUp />
+            </Route>
+          </Switch>
+        </div>
+      </>
   );
 }
 
