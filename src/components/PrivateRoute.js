@@ -1,16 +1,25 @@
 import { Route, Redirect } from 'react-router-dom'
-import {useContext} from "react";
+import {useContext } from "react";
 import {AuthContext} from "../context/AuthContext";
+import checkValidationOfJWT from "../helpers/checkValidationOfJWT";
+
 
 
 function PrivateRoute({children}){
 
-    const {AuthContextState} = useContext(AuthContext)
-    console.log(AuthContextState)
+    const {hasAuth} = useContext(AuthContext)
+    const token = localStorage.getItem('token');
+    if (token && checkValidationOfJWT(token)) {
+        hasAuth.hasAuth = true;
+    }
+    else {
+        hasAuth.hasAuth = false;
+    }
+
 
     return(
         <Route>
-            {!AuthContextState
+            {!hasAuth.hasAuth
                 ?
                 <Redirect to="/signin" />
                 :

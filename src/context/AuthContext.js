@@ -1,42 +1,105 @@
-import {createContext, useState} from "react";
+import {createContext, useEffect, useState} from "react";
 import {useHistory} from "react-router-dom";
+import jwtDecode from "jwt-decode";
+import axios from "axios";
+import checkValidationOfJWT from "../helpers/checkValidationOfJWT";
 
 export const AuthContext = createContext({});
 
 
 function AuthContextProvider({children}) {
     const history = useHistory();
-    const [user, SetUser] = useState({
-        User: '',
-        Email: '',
-        password: '',
-        isAuth: false,
+
+    const [hasAuth, toggleIsAuth] = useState({
+        hasAuth: false,
+        user: null,
+        status: 'pending'
     });
 
-    const data = {
-        AuthContextState: user.isAuth,
-        toggleIsAuthContext: ToggleAuth,
-        user: '',
-        email: user.Email,
-        setEmail: SetUser.Email,
-    }
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token && checkValidationOfJWT(token)) {
+            const decoded = jwtDecode(token);
+            console.log(decoded)
+            void fetchUserData(decoded, token );
+        }
+         else {
+            toggleIsAuth({
+                hasAuth: false,
+                user: null,
+                status: 'done',
+            });
+        }
+    }, []);
 
-    function ToggleAuth(e) {
-        if (user.isAuth === false) {
-            console.log("Je bent nu ingelogd")
-            e.preventDefault()
-            SetUser({...user, isAuth: true})
-            history.push("/")
-        } else {
-                SetUser({...user, isAuth: false})
-            console.log("Je bent nu uitgelogd")
-            history.push("/")
+    async function fetchUserData(decodedToken, token ,redirectUrl ) {
+        try {
+        //     if (checkValidationOfJWT(token))
+        //     history.push("/")
+        //     localStorage.clear();
+        // }
+            const response = await axios.get(`http://localhost:3000/600/users/${decodedToken.sub}`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            console.log(response.data)
+            toggleIsAuth({
+                hasAuth: true,
+                user: {
+                    id: response.data.id,
+                    username: response.data.username,
+                    email: response.data.email
+                },
+                status: 'done'
+            }
+            )
+            console.log(hasAuth.user);
+            if (redirectUrl) {
+                history.push(redirectUrl);
+            }
+        }
+        catch (e) {
+          toggleIsAuth({
+               hasAuth: false,
+                user: null,
+              status: 'done'
+          })
         }
     }
 
+     useEffect(()=> { console.log(hasAuth.status) }, [hasAuth.status] );
+
+
+    const contextData = {
+        hasAuth: hasAuth,
+        user: hasAuth.user,
+        login: login,
+        logout: logout,
+    };
+
+    function login(token) {
+        localStorage.setItem('token', token);
+        const decodedToken = jwtDecode(token);
+        void fetchUserData(decodedToken, token, "/profile");
+        }
+
+    function logout() {
+        localStorage.clear();
+        toggleIsAuth({
+            hasAuth: false,
+            user: null,
+            status: 'done'
+        });
+        history.push("/")
+    }
+
+
     return (
-        <AuthContext.Provider value={data}>
-            {children}
+        <AuthContext.Provider value={contextData}>
+            {hasAuth.status === 'done' ? children : <p>Loading...</p> }
         </AuthContext.Provider>
     )
 }
